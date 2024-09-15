@@ -1,0 +1,44 @@
+create database athena_demo_db
+
+// Raw table for partitioning
+CREATE EXTERNAL TABLE IF NOT EXISTS athena_raw_table (
+      id string,
+     name string,
+     department string
+)
+PARTITIONED BY (
+    id string,
+    department string
+)
+STORED AS PARQUET
+LOCATION "s3://${BUCKET}/raw/"
+TBLPROPERTIES (
+  "projection.enabled" = "true",
+  "projection.id.type"= "injected",
+  "projection.department.type"= "injected",
+  "storage.location.template"= "s3://${BUCKET}/raw/${id}/${department}/"
+)
+
+// optimized table for loading
+CREATE EXTERNAL TABLE IF NOT EXISTS athena_optimized_table (
+      id string,
+     name string,
+     department string
+)
+PARTITIONED BY (
+    id string,
+    department string
+)
+STORED AS PARQUET
+LOCATION "s3://${BUCKET}/optimized/"
+TBLPROPERTIES (
+  "projection.enabled" = "true",
+  "projection.operator_icao_code.type"= "injected",
+  "projection.event_year.type"= "injected",
+  "storage.location.template"= "s3://${BUCKET}/optimized/id=${id}/department=${department}/"
+)
+
+
+// creating projection query
+INSERT INTO athena_optimized_table
+SELECT id_cmsReport, cmsReportSource, cmsReportType, registrationNumber, id_aircraft, aircraftProject, airportFromICAOCode, airportToICAOCode, cmsTransmissionDate, cmsReportStartingDate, flightLegId, id_fault, faultCode, faultWording, faultType, flightPhaseNumber, ata4D, ata6D, eventDate, flightPhaseDescription, eventClosureDate, sourceEquipment, priority, cmsReportTab, classLevel, faultOrigin, departureFlightnumber,operatorICAOCode, operatorICAOCode AS operator_icao_code, CAST(EXTRACT(YEAR FROM eventDate) AS VARCHAR) AS event_year FROM athena_raw_table WHERE dataset_id='test_transaction_id' AND transaction_id='test_dataset_id' AND operatorICAOCode IN ('QTR')
