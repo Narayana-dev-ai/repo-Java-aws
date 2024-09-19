@@ -1,0 +1,24 @@
+EXAMPLE QUERIES FOR UNDERSTANDING PURPOSE
+
+//g.addV('company').property('T.id','1Company').property('comCode','W000709').property('fleetCode','HiddenFleetCode1').property('type','C')
+//g.addV('company').property('T.id','2Company').property('comCode','W000709').property('fleetCode','HiddenFleetCode2').property('type','C')
+
+//g.addV('aircraft').property('T.id','1aircraft').property('extendedMsn', 'C50020')
+//g.addV('aircraft').property('T.id','2aircraft').property('extendedMsn', 'C50021')
+//g.addV('aircraft').property('T.id','3aircraft').property('extendedMsn', 'C50022')
+
+//g.addE('subfleet').from(__.V().has('company','T.id','1Company')).to(__.V().has('aircraft','T.id','1aircraft'))
+//g.addE('subfleet').from(__.V().has('company','T.id','2Company')).to(__.V().has('aircraft','T.id','2aircraft'))
+//g.addE('subfleet').from(__.V().has('company','T.id','2Company')).to(__.V().has('aircraft','T.id','3aircraft'))
+
+//g.V().hasLabel('company').project('comCode', 'fleetCode','aircraft').by('comCode').by('fleetCode').by(out('subfleet').values("extendedMsn").fold())
+
+
+//g.V().hasLabel('company').project('comCode', 'fleetCode','aircraft').by('comCode').by('fleetCode').by(out('subfleet').values("extendedMsn").fold())
+
+
+IDE online playground:: https://gremlify.com/
+
+Gremlin Model Language Cheat Sheet:: https://dkuppitz.github.io/gremlin-cheat-sheet/101.html
+
+Complex Query:: g.V().hasLabel('User').has(id,'Z2F1cmF2LmdhbmdyYWRlQGFpcmJ1cy5jb20=').out('userAffectsToGroup').out('profileAffectedToGroup').as('profile').in('contractAllowsProfile').has('contractStartDate',lt(1691397241904)).union(hasNot('contractEndDate'),has('contractEndDate',gt(1691397241904))).has('contractType','C').as('contract').in('companyOwnsContract').as('company').select('contract').out('contractConcernsApplication').has('appCode','SKM').has('appStage','TEST').has('appVersion','1.0').as('application').select('contract').out('contractProvidesModule').has('modCodeOriginal', within('SHM')).as('module').select('contract').out('contractAllowsFleet').as('fleet').select('company','application','module','fleet','profile').by(valueMap('comCode','icao','comName')).by(valueMap('appCode','appStage','appVersion')).by(valueMap('modCode')).by(out('defaultFleetContainsAircraft', 'subFleetContainsAircraft').valueMap('startDate','extendedMsn','tailnumber','isAnnex13').fold()).by(out('profileContainsPermission').valueMap('permCode').fold()).dedup()
